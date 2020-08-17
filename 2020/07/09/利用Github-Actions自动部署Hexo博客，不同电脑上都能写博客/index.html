@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="一开始是在笔记本上写博客，后来准备在实验室的电脑上也能写博客。所以现在需要解决不同的电脑上都能写Hexo博客问题，目前我了解的方式有两种：  法1：在Github中新建项目分支如hexo分支，将hexo博客的源文件上传到hexo分支。 这种方法可以参考使用hexo，如果换了电脑怎么更新博客？ - 直上云霄的回答 ,但是这种方法不推荐，因为源文件中包含我们许多隐私信息，这些信息我们不希望别人看见。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用Github Actions自动部署Hexo博客，不同电脑上都能写博客">
+<meta property="og:url" content="http://yoursite.com/2020/07/09/%E5%88%A9%E7%94%A8Github-Actions%E8%87%AA%E5%8A%A8%E9%83%A8%E7%BD%B2Hexo%E5%8D%9A%E5%AE%A2%EF%BC%8C%E4%B8%8D%E5%90%8C%E7%94%B5%E8%84%91%E4%B8%8A%E9%83%BD%E8%83%BD%E5%86%99%E5%8D%9A%E5%AE%A2/index.html">
+<meta property="og:site_name" content="Notebook">
+<meta property="og:description" content="一开始是在笔记本上写博客，后来准备在实验室的电脑上也能写博客。所以现在需要解决不同的电脑上都能写Hexo博客问题，目前我了解的方式有两种：  法1：在Github中新建项目分支如hexo分支，将hexo博客的源文件上传到hexo分支。 这种方法可以参考使用hexo，如果换了电脑怎么更新博客？ - 直上云霄的回答 ,但是这种方法不推荐，因为源文件中包含我们许多隐私信息，这些信息我们不希望别人看见。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/07/09/4ZzeUmybM1GiWFE.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/09/j3HOq4pmY192F6s.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/09/u4sJPzmFi1nNBIf.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/09/VxMQPAkjfhCWFlm.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/09/raBMjTsdtbzeDCY.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/09/Hij3M5ZmOuJVItL.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/09/4WVhfUXoiGORTuj.png">
+<meta property="og:image" content="https://i.loli.net/2020/07/09/JQ5RTCqlcNf6tZw.png">
+<meta property="article:published_time" content="2020-07-09T20:42:17.000Z">
+<meta property="article:modified_time" content="2020-08-17T06:48:45.975Z">
+<meta property="article:author" content="Star Stone">
+<meta property="article:tag" content="hexo">
+<meta property="article:tag" content="next">
+<meta property="article:tag" content="自动部署">
+<meta property="article:tag" content="github actions">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/07/09/4ZzeUmybM1GiWFE.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/07/09/%E5%88%A9%E7%94%A8Github-Actions%E8%87%AA%E5%8A%A8%E9%83%A8%E7%BD%B2Hexo%E5%8D%9A%E5%AE%A2%EF%BC%8C%E4%B8%8D%E5%90%8C%E7%94%B5%E8%84%91%E4%B8%8A%E9%83%BD%E8%83%BD%E5%86%99%E5%8D%9A%E5%AE%A2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>利用Github Actions自动部署Hexo博客，不同电脑上都能写博客 | Notebook</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+    <a href="https://github.com/Star-Stone" target="_blank" rel="noopener" class="github-corner" aria-label="View source on GitHub"><svg width="100" height="100" viewBox="0 0 250 250" style="fill:#70B7FD; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Notebook</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/09/%E5%88%A9%E7%94%A8Github-Actions%E8%87%AA%E5%8A%A8%E9%83%A8%E7%BD%B2Hexo%E5%8D%9A%E5%AE%A2%EF%BC%8C%E4%B8%8D%E5%90%8C%E7%94%B5%E8%84%91%E4%B8%8A%E9%83%BD%E8%83%BD%E5%86%99%E5%8D%9A%E5%AE%A2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Star Stone">
+      <meta itemprop="description" content="前面漆黑一片，什么也看不到。<br>也不是，天亮后会很美的。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Notebook">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          利用Github Actions自动部署Hexo博客，不同电脑上都能写博客
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-09 20:42:17" itemprop="dateCreated datePublished" datetime="2020-07-09T20:42:17+00:00">2020-07-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-17 06:48:45" itemprop="dateModified" datetime="2020-08-17T06:48:45+00:00">2020-08-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Hexo%E5%8D%9A%E5%AE%A2%E8%AE%BE%E7%BD%AE/" itemprop="url" rel="index"><span itemprop="name">Hexo博客设置</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/07/09/%E5%88%A9%E7%94%A8Github-Actions%E8%87%AA%E5%8A%A8%E9%83%A8%E7%BD%B2Hexo%E5%8D%9A%E5%AE%A2%EF%BC%8C%E4%B8%8D%E5%90%8C%E7%94%B5%E8%84%91%E4%B8%8A%E9%83%BD%E8%83%BD%E5%86%99%E5%8D%9A%E5%AE%A2/" class="post-meta-item leancloud_visitors" data-flag-title="利用Github Actions自动部署Hexo博客，不同电脑上都能写博客" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/07/09/%E5%88%A9%E7%94%A8Github-Actions%E8%87%AA%E5%8A%A8%E9%83%A8%E7%BD%B2Hexo%E5%8D%9A%E5%AE%A2%EF%BC%8C%E4%B8%8D%E5%90%8C%E7%94%B5%E8%84%91%E4%B8%8A%E9%83%BD%E8%83%BD%E5%86%99%E5%8D%9A%E5%AE%A2/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/07/09/%E5%88%A9%E7%94%A8Github-Actions%E8%87%AA%E5%8A%A8%E9%83%A8%E7%BD%B2Hexo%E5%8D%9A%E5%AE%A2%EF%BC%8C%E4%B8%8D%E5%90%8C%E7%94%B5%E8%84%91%E4%B8%8A%E9%83%BD%E8%83%BD%E5%86%99%E5%8D%9A%E5%AE%A2/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>一开始是在笔记本上写博客，后来准备在实验室的电脑上也能写博客。所以现在需要解决不同的电脑上都能写Hexo博客问题，目前我了解的方式有两种：</p>
+<ul>
+<li><p>法1：在Github中新建项目分支如hexo分支，将hexo博客的源文件上传到hexo分支。</p>
+<p>这种方法可以参考<a href="https://www.zhihu.com/question/21193762/answer/489124966" target="_blank" rel="noopener">使用hexo，如果换了电脑怎么更新博客？ - 直上云霄的回答</a> ,但是这种方法不推荐，因为源文件中包含我们许多隐私信息，这些信息我们不希望别人看见。</p>
+<blockquote>
+<p><code>hexo d</code> 上传部署到github的其实是hexo编译后的文件，是用来生成网页的，不包含源文件。<code>hexo d</code>上传的文件是在本地目录里自动生成的<code>.deploy_git</code>里面。其他文件 ，包括我们写在source 里面的，和配置文件，主题文件，都没有上传到github的仓库<code>用户.github.io</code>中。</p>
+</blockquote>
+</li>
+<li><p>法2：github上新建2个仓库，一个仓库<code>用户名.github.io</code>用来放网页静态文件，一个仓库用来存放博客的源代码文件，源码中包含隐私信息，所以<strong>这个仓库设为私有</strong>。 <strong>每当博客的源代码更新push到私有仓库时，Github Actions自动编译hexo博客，并更新仓库</strong> <code>用户名.github.io</code>。每当换一台电脑时，只要下载私有仓库到本地，修改内容后提交到github，Github Actions自动同步更新仓库<code>用户名.github.io</code>，这样实现了不同电脑都能写Hexo博客。</p>
+</li>
+</ul>
+<p>接下来，本文详细说明方法2是如何操作的。</p>
+<a id="more"></a>
+
+<h3 id="准备仓库"><a href="#准备仓库" class="headerlink" title="准备仓库"></a>准备仓库</h3><ul>
+<li><p>公用仓库：<code>用户名.github.io</code> </p>
+<p>用来存放生成静态网页的文件，文件是在本地目录里自动生成的<code>.deploy_git</code>里面。仓库是空或者已经有内容都行。</p>
+</li>
+<li><p>私有仓库：自己随便取名（我的是<code>Blog-Source-File</code>）</p>
+</li>
+</ul>
+<h3 id="准备SSH密钥"><a href="#准备SSH密钥" class="headerlink" title="准备SSH密钥"></a>准备SSH密钥</h3><ol>
+<li><p>进入 key 的存储路径,SSH目录： ~/.ssh</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd ~&#x2F;.ssh</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>生成密钥对命令如下，邮箱用自已的就行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t rsa -C &quot;你的邮箱&quot;</span><br></pre></td></tr></table></figure>
+
+<p>会有提示，让输入存放 Key 的文件名，我输入了 test.rsa 。（文件存在的话，可选择覆盖。不存在会自动创建）</p>
+<p>再后来会让设置一个密码和确认密码，可不设置，连续点再次回车即行。（若设置了，以后每次 git 提交都要此密码确认）</p>
+<p><img src="https://i.loli.net/2020/07/09/4ZzeUmybM1GiWFE.png" alt=""></p>
+</li>
+<li><p>查看新的 SSH-Key ,可见<code>.ssh文件夹</code>下有3组公私钥。<code>.pub</code>是公钥，<code>.rsa</code>是私钥。接下来两个仓库需要使用创建新的SSH-Key。</p>
+<p><img src="https://i.loli.net/2020/07/09/j3HOq4pmY192F6s.png" alt=""></p>
+</li>
+</ol>
+<blockquote>
+<p>reference：<a href="https://blog.csdn.net/u011314442/article/details/103559435" target="_blank" rel="noopener">生成多个 SSH-Key 、生成多个公钥和私钥</a></p>
+</blockquote>
+<h3 id="公有仓库配置：-用户名-github-io"><a href="#公有仓库配置：-用户名-github-io" class="headerlink" title="公有仓库配置： 用户名.github.io"></a>公有仓库配置： <code>用户名.github.io</code></h3><ol>
+<li><p>修改本地hexo博客文件及下的<code>_config.yml</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: 公有仓库ssh链接(如：git@github.com:Star-Stone&#x2F;Star-Stone.github.io.git)</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>设置公有仓库的Deploy keys</p>
+<p>公有仓库在Settings里找到<code>Deploy keys</code>，新建<code>Deploy keys</code>，取名为<code>DEPLOY_KEY</code>。上一步中，我生成了专门用于博客的公钥<code>blog.rsa.pub</code>和私钥<code>blog.rsa</code>。我们将的公钥<code>blog.rsa.pub</code>内容复制到公有仓库的<code>DEPLOY_KEY</code>中。</p>
+</li>
+</ol>
+<p><img src="https://i.loli.net/2020/07/09/u4sJPzmFi1nNBIf.png" alt=""></p>
+<h3 id="私有仓库配置：我的是Blog-Source-File"><a href="#私有仓库配置：我的是Blog-Source-File" class="headerlink" title="私有仓库配置：我的是Blog-Source-File"></a>私有仓库配置：我的是Blog-Source-File</h3><ol>
+<li><p>设置私有仓库的Secrets</p>
+<p>私有仓库在Settings里找到<code>Secrets</code>，新建<code>Secrets</code>，取名为<code>HEXO_DEPLOY_PRIVATE_KEY</code>。公有仓库Deploy keys添加了公钥，私有仓库添加的是与之对应的私钥内容。我们将私钥<code>blog.rsa</code>内容复制到<code>Secrets</code>中。</p>
+<p><img src="https://i.loli.net/2020/07/09/VxMQPAkjfhCWFlm.png" alt=""></p>
+</li>
+<li><p>添加私有仓库的Actions</p>
+<ul>
+<li><p>点击Actions，新建<code>New workflow</code></p>
+<p><img src="https://i.loli.net/2020/07/09/raBMjTsdtbzeDCY.png" alt=""></p>
+<p><img src="https://i.loli.net/2020/07/09/Hij3M5ZmOuJVItL.png" alt=""></p>
+</li>
+<li><p>github会自动生成<code>main.yml</code></p>
+<p><img src="https://i.loli.net/2020/07/09/4WVhfUXoiGORTuj.png" alt=""></p>
+<p><code>main.yml</code>内容替换为一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"># workflow name</span><br><span class="line">name: Hexo Blog CI</span><br><span class="line"></span><br><span class="line"># master branch on push, auto run</span><br><span class="line">on: </span><br><span class="line">  push:</span><br><span class="line">    branches:</span><br><span class="line">      - master</span><br><span class="line">      </span><br><span class="line">jobs:</span><br><span class="line">  build: </span><br><span class="line">    runs-on: ubuntu-latest </span><br><span class="line">        </span><br><span class="line">    steps:</span><br><span class="line">    # check it to your workflow can access it</span><br><span class="line">    # from: https:&#x2F;&#x2F;github.com&#x2F;actions&#x2F;checkout</span><br><span class="line">    - name: Checkout Repository master branch</span><br><span class="line">      uses: actions&#x2F;checkout@master </span><br><span class="line">      </span><br><span class="line">    # from: https:&#x2F;&#x2F;github.com&#x2F;actions&#x2F;setup-node  </span><br><span class="line">    - name: Setup Node.js 10.x </span><br><span class="line">      uses: actions&#x2F;setup-node@master</span><br><span class="line">      with:</span><br><span class="line">        node-version: &quot;10.x&quot;</span><br><span class="line">    </span><br><span class="line">    - name: Setup Hexo Dependencies</span><br><span class="line">      run: |</span><br><span class="line">        npm install hexo-cli -g</span><br><span class="line">        npm install</span><br><span class="line">    </span><br><span class="line">    - name: Setup Deploy Private Key</span><br><span class="line">      env:</span><br><span class="line">        HEXO_DEPLOY_PRIVATE_KEY: $&#123;&#123; secrets.HEXO_DEPLOY_PRIVATE_KEY &#125;&#125;</span><br><span class="line">      run: |</span><br><span class="line">        mkdir -p ~&#x2F;.ssh&#x2F;</span><br><span class="line">        echo &quot;$HEXO_DEPLOY_PRIVATE_KEY&quot; &gt; ~&#x2F;.ssh&#x2F;id_rsa </span><br><span class="line">        chmod 600 ~&#x2F;.ssh&#x2F;id_rsa</span><br><span class="line">        ssh-keyscan github.com &gt;&gt; ~&#x2F;.ssh&#x2F;known_hosts</span><br><span class="line">        </span><br><span class="line">    - name: Setup Git Infomation</span><br><span class="line">      run: | </span><br><span class="line">        git config --global user.name &#39;名字&#39; </span><br><span class="line">        git config --global user.email &#39;邮件&#39;</span><br><span class="line">    - name: Deploy Hexo </span><br><span class="line">      run: |</span><br><span class="line">        hexo clean</span><br><span class="line">        hexo generate </span><br><span class="line">        hexo deploy</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>把本地hexo博客源代码推送到私有仓库</p>
+<ul>
+<li><p>打开本地hexo博客文件夹</p>
+</li>
+<li><p>执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git init</span><br><span class="line">git remote add origin 私有仓库ssh链接</span><br><span class="line">git add .</span><br><span class="line">git commit -m &quot;注释&quot;</span><br><span class="line">git push origin master</span><br></pre></td></tr></table></figure>
+
+<p>注意：<code>git add</code>可能报如下错误</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$ git add .</span><br><span class="line"></span><br><span class="line">warning: adding embedded git repository: themes&#x2F;next</span><br><span class="line">hint: You&#39;ve added another git repository inside your current repository.</span><br><span class="line">hint: Clones of the outer repository will not contain the contents of</span><br><span class="line">hint: the embedded repository and will not know how to obtain it.</span><br><span class="line">hint: If you meant to add a submodule, use:</span><br><span class="line">hint:</span><br><span class="line">hint:   git submodule add &lt;url&gt; themes&#x2F;next</span><br><span class="line">hint:</span><br><span class="line">hint: If you added this path by mistake, you can remove it from the</span><br><span class="line">hint: index with:</span><br><span class="line">hint:</span><br><span class="line">hint:   git rm --cached themes&#x2F;next</span><br><span class="line">hint:</span><br><span class="line">hint: See &quot;git help submodule&quot; for more information.</span><br></pre></td></tr></table></figure>
+
+<p>这是因为 git 检测到 themes/next 目录是来自另一个 git 项目，不能直接作为本项目的文件进行上传。</p>
+<p>解决办法如下：</p>
+<ol>
+<li>删除 themes/next/.git 目录</li>
+<li>把 hexo-theme-next 添加到 git 子模块</li>
+</ol>
+<blockquote>
+<p>references: <a href="https://qlzhu.github.io/blog/46430/" target="_blank" rel="noopener">git子模块添加hexo-theme-next</a></p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>每次修改了hexo博客，使用以下命令推送更新到私有仓库，私有仓库Actions自动执行，同步更新<code>用户名.github.io</code>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git add .</span><br><span class="line">git commit -m &quot;注释&quot;</span><br><span class="line">git push origin master</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://i.loli.net/2020/07/09/JQ5RTCqlcNf6tZw.png" alt=""></p>
+<p><strong>此外我们还实现了不同电脑上hexo博客的更新。如果有新的一台电脑想要修改博客，只要先把私有仓库下载到本地，修改内容后提交到github。Gthub Actions会自动更新<code>用户名.github.io</code></strong>。</p>
+</li>
+</ol>
+<blockquote>
+<p>references : </p>
+<p><a href="https://blog.csdn.net/u012208219/article/details/106883054?utm_medium=distribute.pc_relevant.none-task-blog-baidujs-2" target="_blank" rel="noopener">利用GitHub+Actions自动部署Hexo博客</a></p>
+<p><a href="https://darlewo.cn/Github_Actions_Blog_Automation_deploying.html" target="_blank" rel="noopener">Github Actions全自动博客部署</a></p>
+</blockquote>
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><table>
+<thead>
+<tr>
+<th align="center">文件或文件夹</th>
+<th align="left">功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">.deploy</td>
+<td align="left">执行hexo deploy命令部署到GitHub上的内容目录</td>
+</tr>
+<tr>
+<td align="center">public</td>
+<td align="left">执行hexo generate命令，输出的静态网页内容目录</td>
+</tr>
+<tr>
+<td align="center">scaffolds</td>
+<td align="left">layout模板文件目录，其中的md文件可以添加编辑</td>
+</tr>
+<tr>
+<td align="center">scripts</td>
+<td align="left">扩展脚本目录，这里可以自定义一些javascript脚本</td>
+</tr>
+<tr>
+<td align="center">source</td>
+<td align="left">文章源码目录，该目录下的markdown和html文件均会被hexo处理。该页面对应repo的根目录，404文件、favicon.ico文件，CNAME文件等都应该放这里，该目录下可新建页面目录。</td>
+</tr>
+<tr>
+<td align="center">_drafts</td>
+<td align="left">草稿文章</td>
+</tr>
+<tr>
+<td align="center">_posts</td>
+<td align="left">发布文章</td>
+</tr>
+<tr>
+<td align="center">themes</td>
+<td align="left">主题文件目录</td>
+</tr>
+<tr>
+<td align="center">_config.yml</td>
+<td align="left">全局配置文件，大多数的设置都在这里</td>
+</tr>
+<tr>
+<td align="center">package.json</td>
+<td align="left">应用程序数据，指明hexo的版本等信息，类似于一般软件中的关于按钮</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>Hexo原理就是hexo在执行hexo generate时会在本地先把博客生成的一套静态站点放到public文件夹中，在执行hexo deploy时将其复制到.deploy文件夹中。</p>
+<p>Github的版本库通常建议同时附上README.md说明文件，但是hexo默认情况下会把所有md文件解析成html文件，所以即使在线生成了README .md，它也会在你下一次部署时被删去。怎么解决呢？<br>在执行hexo deploy前把在本地写好的README.md文件复制到.deploy文件夹中，再去执行hexo deploy。</p>
+<p>references: <a href="[http://littlehaes.com/2018/08/06/hexo%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E5%88%B0%E5%8F%A6%E4%B8%80%E5%8F%B0%E7%94%B5%E8%84%91/](http://littlehaes.com/2018/08/06/hexo博客迁移到另一台电脑/)">hexo博客迁移到另一台电脑</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/hexo/" rel="tag"># hexo</a>
+              <a href="/tags/next/" rel="tag"># next</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E9%83%A8%E7%BD%B2/" rel="tag"># 自动部署</a>
+              <a href="/tags/github-actions/" rel="tag"># github actions</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/15/day01-%E5%8F%98%E9%87%8F%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/" rel="next" title="JavaSE 01 变量与数据类型">
+      JavaSE 01 变量与数据类型 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#准备仓库"><span class="nav-number">1.</span> <span class="nav-text">准备仓库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#准备SSH密钥"><span class="nav-number">2.</span> <span class="nav-text">准备SSH密钥</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#公有仓库配置：-用户名-github-io"><span class="nav-number">3.</span> <span class="nav-text">公有仓库配置： 用户名.github.io</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#私有仓库配置：我的是Blog-Source-File"><span class="nav-number">4.</span> <span class="nav-text">私有仓库配置：我的是Blog-Source-File</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他"><span class="nav-number">5.</span> <span class="nav-text">其他</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Star Stone"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Star Stone</p>
+  <div class="site-description" itemprop="description">前面漆黑一片，什么也看不到。<br>也不是，天亮后会很美的。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Star Stone</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">51k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">46 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'Meez9bL8hdIJRco2kNgXg6i0-9Nh9j0Va',
+      appKey     : 'N7K2A0frOSeJbWExS2CJieKY',
+      placeholder: "欢迎留言交流",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
